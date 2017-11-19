@@ -56,6 +56,7 @@ myApp.c.appConfig = {
     
     // login
     loginEnable: true,
+    pageLogin: 'login',
 
     // Para os itens abaixo passe TRUE ou FALSE para aplicar em todas as paginas ou informe as paginas em um array
     // Oculta barra superior (label/icones)
@@ -77,6 +78,15 @@ myApp.c.setAppConfig = function (param) {
 // getLocalStorage - obtem dados do localStorage - return JSON / null
 myApp.c.getLocalStorage = function () {
     return JSON.parse((localStorage.getItem(this.appConfig.localStorageName) || '{}'));
+};
+
+// verifica se esta logado no APP se necessario
+myApp.c.appLogado = function () {
+    if (this.appConfig.loginEnable === true && this.currentPage !== this.appConfig.pageLogin) {
+        return (JSON.parse(localStorage.getItem(this.appConfig.localStorageName)).appLogado === true) ? true : false;    
+    } else {
+        return true;
+    }
 };
 
 // setLocalStorage - altera ou cria localStorage - return void
@@ -245,8 +255,14 @@ myApp.c.initPage = function (page, callback) {
         if (typeof myApp.c['afterLoadPage' + pg.name] == 'function') {
             myApp.c['afterLoadPage' + pg.name](pg);
         }
-        // calback do load
-        callback(pg);
+        // verifica se esta logado se necessario
+        if (!myApp.c.appLogado()) {
+            myApp.c.logout();
+            return;   
+        } else {
+            // calback do load
+            callback(pg);
+        }
     });
 };
 
@@ -263,7 +279,7 @@ myApp.c.afterLoadPage = function () {
 // Inicia validacao do login
 myApp.c.initLogin = function () {
     if (this.appConfig.loginEnable) {
-        var pageLogin = 'login';
+        var pageLogin = this.appConfig.pageLogin;
         this.posLogin = this.appConfig.indexPage;
         this.appConfig.indexPage = pageLogin + '.html';
         this.appConfig.pages.push(pageLogin);
@@ -307,14 +323,16 @@ myApp.c.initLogin = function () {
 
 // logout app
 myApp.c.logout = function () {
-    this.clearLocalStorage();
-    this.go('login.html');
+    myApp.c.clearLocalStorage();
+    console.log(myApp.c.appConfig.pageLogin);
+    myApp.c.go(myApp.c.appConfig.pageLogin + '.html');
     return;
 }
 
 // callback default Login
 myApp.c.callbackLogin = function (a) {
     if(a !== false) {
+        $.extend(a, {appLogado: true});
         myApp.c.setLocalStorage(a);
         myApp.c.appConfig.indexPage = myApp.c.posLogin;
         myApp.c.goIndex();
@@ -369,7 +387,9 @@ myApp.c.errorAjaxApi = function (jqXHR, textStatus, errorThrown) {
             if ((typeofError = typeof jqXHR.error) != 'undefined') {
                 if (typeofError == 'object') {
                     for (var i in jqXHR.error) {
-                        errorStr += '&bull; ' + jqXHR.error[i] + '<br />';
+                        if (jqXHR.error[i][0]) {
+                            errorStr += '&bull; ' + jqXHR.error[i][0] + '<br />';
+                        }
                     }
                 } else {
                     errorStr += '&bull; ' + String(jqXHR.error);

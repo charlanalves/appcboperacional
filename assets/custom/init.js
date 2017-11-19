@@ -5,8 +5,8 @@ myApp.c.setAppConfig({
     appSlogan: 'operacional',
     pages: ['main'],
     indexPage: 'main.html',
-    urlApi: 'http://www.estalecas.com.br/api/frontend/web/index.php?r=api-empresa/',
-    urlImg: 'http://www.estalecas.com.br/api/frontend/web/img/'
+    urlApi: 'http://localhost/cashback/frontend/web/index.php?r=api-empresa/',
+    urlImg: 'http://localhost/cashback/frontend/web/img/'
 });
 myApp.c.setPanelLeft([
     {href: 'main.html', label: 'PDV', ico: 'usd'},
