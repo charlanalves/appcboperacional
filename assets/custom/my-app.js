@@ -364,10 +364,13 @@ myApp.c.ajaxApi = function (method, params, callback) {
     ajaxParams.url = this.appConfig.urlApi + method;
     ajaxParams.timeout = 7000;
 
-    myApp.showPreloader(' ');
+    // verifica Preloader
+    Preloader = $('.modal-overlay-visible').length;
+    if (!Preloader) myApp.showPreloader(' ');
+    
     var ajax = $.ajax(ajaxParams);
     ajax.always(function (jqXHR, textStatus, errorThrown) {
-        myApp.hidePreloader();
+        if (!Preloader) myApp.hidePreloader();
         if ((error = myApp.c.errorAjaxApi(jqXHR, textStatus, errorThrown))) {
             myApp.alert(error, 'Opss');
         } else if (typeof callback == 'function') {
@@ -512,6 +515,10 @@ myApp.c.initModal = function () {
         $(modal[i]).css('display', 'block');
         t = parseInt(modalInner.css('height'));
         modalInner.parent('div.modal-in').css('margin-top', String(parseInt(((t/2)+15)*-1)) + 'px');
+        // fechar modal
+        $('.close-' + idModal).on('click', function () {
+            myApp.c.closeModal(idModal);
+        });
     }    
 };
 myApp.c.openModal = function (modalName) {

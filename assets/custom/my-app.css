@@ -234,6 +234,8 @@ li .width-50p:first-child .item-inner {
 li .width-50p:last-child .item-inner {
     padding-left: 7.5px!important;
 }
+.float-left {float: left!important};
+.float-right {float: right!important};
 /* UTIL -------------------------------------- */
 
 
@@ -328,6 +330,9 @@ li .width-50p:last-child .item-inner {
     margin-top: -2px!important;
     position: absolute;  
 }
+#listaPromocoes .list-promocoes i.fa:active {
+    opacity: 0.3;
+}
 
 /* PANINEL DIREITA - DADOS DA COMPRA */
 #painelCompra {
@@ -336,7 +341,8 @@ li .width-50p:last-child .item-inner {
     background: #FFF;
     height: 100%;
     margin-left: 510px;
-    margin-top: -15px;
+    margin-top: 25px;
+    top: 0px;
 }
 #painelCompra .funcionario {
     padding: 4px;

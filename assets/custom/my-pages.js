@@ -15,9 +15,14 @@ class LoadPage {
         // var GLOBAL
         var locaStorage = myApp.c.getLocalStorage(),
             formPDV = $('#painelCompra form'),
+            formFinalizar = $('#modalFormMain form'),
+            objFormFinalizar = new Form('form-finalizar'),
             inputCompraPDV = formPDV.find('input[name=total_compra]'),
             cbDia = 0,
-            vlrTotalPromocao = 0;
+            vlrTotalPromocao = 0,
+            vlrTotalCompra = 0,
+            itensPedido = [];
+            
 
         myApp.c.ajaxApi ('operacional-main', locaStorage, function (a) {
             // cb do dia
@@ -48,21 +53,17 @@ class LoadPage {
 
             // btn avancar
             formPDV.find('#btn-avancar').on('click', function () {
-                var vlrTotalCompra = Util.formatNumberBR(inputCompraPDV.val());
-                if(vlrTotalCompra>0) {
-                    if(vlrTotalCompra < vlrTotalPromocao) {
-                        $('#erro-valor-menor b').html(Util.formatNumber(vlrTotalPromocao));
-                        $('#erro-valor-menor').show();
-                    } else {
-                        $('#erro-valor-menor').hide();            
-                        myApp.c.openModal('modalFormMain');
-                    }
+                vlrTotalCompra = Util.formatNumberBR(inputCompraPDV.val());
+                if(!vlrTotalCompra) {
+                    $('#erro-avancar').html("Informe o valor da compra.").show();
+                } else if(vlrTotalCompra < vlrTotalPromocao) {
+                    $('#erro-avancar').html("O valor da compra não pode ser menor que o total do pedido (<b>" + Util.formatNumber(vlrTotalPromocao) + "</b>)").show();
+                } else {
+                    $('#erro-avancar').hide();
+                    // modal finalizar
+                    //objFormFinalizar.clear();
+                    myApp.c.openModal('modalFormMain');
                 }
-            });
-
-            // avancar
-            $('#close-modalFormMain').on('click', function () {
-                myApp.c.closeModal('modalFormMain');
             });
 
             inputCompraPDV.keyup(function () {
@@ -97,10 +98,35 @@ class LoadPage {
             var calcTotalCbPromocao = function () {
                 // global
                 vlrTotalPromocao = 0;
-                var vlrTotalCb = 0;
+                itensPedido = [];
+                var vlrTotalCb = 0,
+                    vlrUnidadePromocao = 0,
+                    idPromocao = 0,
+                    qtdSelecionada = 0;
+            
                 $('#listPromocoes li .list-promocoes').each(function(){
-                    vlrTotalCb += Util.formatNumberBR($(this).find('.cb label').text().substr(2));
-                    vlrTotalPromocao += Util.formatNumberBR($(this).find('.vlr_total').text().substr(2));
+                    
+                    // quantidade selecionada
+                    qtdSelecionada = parseInt($(this).find('.nun-qtd').text());
+                    if (qtdSelecionada) {
+
+                        // valor total do CB para a promocao
+                        vlrTotalCb += Util.formatNumberBR($(this).find('.cb label').text().substr(2));
+
+                        // valor total da promocao (valor ja multiplicado pela quantidade)
+                        vlrTotalPromocao += Util.formatNumberBR($(this).find('.vlr_total').text().substr(2));
+
+                        // valor unidade da promocao
+                        vlrUnidadePromocao = Util.formatNumberBR($(this).find('.vlr').text().substr(2));
+
+                        // id da promocao
+                        idPromocao = $($(this).find('div')[0]).data('promocao');
+
+                        // itens do pedido
+                        itensPedido.push({promocao: idPromocao, qtd: qtdSelecionada, vlr_unidade: vlrUnidadePromocao});
+
+                    }
+                    
                 });
                 $('.detalheCompra .total-cb-promocao').text(Util.formatNumber(vlrTotalCb));
             };
@@ -123,6 +149,34 @@ class LoadPage {
                     calcTotalCb();
                 }
             };
+            
+            // btn pesquisar cliente
+            formFinalizar.find('#btn-busca-cliente-pdv').on('click', function () {
+                var CPF = formFinalizar.find('input[name=busca_cpf]').val();
+                if (CPF) {
+                    var btnHtml = this;
+                    $(btnHtml).attr('disabled',true);
+                    myApp.c.ajaxApi ('operacional-get-cliente-pdv', $.extend({busca_cpf: CPF, total_compra: vlrTotalCompra} ,locaStorage), function (a) {
+                        if(!a) {
+                            $('#erro-busca-cpf').html("Cliente não encontrado.").addClass('form-erro').show();
+                        } else {
+                            // nome do cliente
+                            $('#erro-busca-cpf').html(a.cliente.name).removeClass('form-erro').show();
+                            // opcoes de pagamento
+                            $(objFormFinalizar['forma_pagamento']).html('');
+                            objFormFinalizar.addOptionsSelect('forma_pagamento', a.formasPagamento);
+                        }
+                        $(btnHtml).removeAttr('disabled');
+                    });
+                }
+            });
+            
+            // btn pesquisar cliente
+            formFinalizar.find('#btn-finalizar-pdv').on('click', function () {
+                var dadosFormFinalizar = objFormFinalizar.getFormData(),
+                    dadosFinalizar = $.extend(dadosFormFinalizar, {total_compra: vlrTotalCompra, cb_dia: cbDia, promocoes: itensPedido});
+                console.log(dadosFormFinalizar);
+            });
         
         });
     }
