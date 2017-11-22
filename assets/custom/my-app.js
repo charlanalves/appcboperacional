@@ -75,6 +75,49 @@ myApp.c.setAppConfig = function (param) {
     $.extend(this.appConfig, param);
 };
 
+// lista de notificacoes pendentes
+myApp.c.notificationList = [];
+
+// verifica se tem notificacao aberta
+myApp.c.notificationOpen = false;
+
+// notificacao de erros do app
+myApp.c.errorNotification = function (e, t, c) {
+	// nao abre duas notificacoes ao mesmo tempo, add na lista
+	if(this.notificationOpen) {
+		this.notificationList.push([e, t, c]);
+		return;
+	}
+	this.notificationOpen = true;
+	// bloqueia a tela
+	var telaBloqueada = $('.modal-overlay-visible').length;
+	if(!telaBloqueada){
+		$('.modal-overlay').addClass('modal-overlay-visible');
+	}
+	$('.modal-overlay').attr('style', 'z-index: 19999');
+	myApp.addNotification({
+        title: '<i class="fa fa-warning"></i> <strong>'+(t || 'Opss')+'</strong>',
+        message: e,
+		onClose: function () {
+			if(!telaBloqueada){
+				$('.modal-overlay').removeClass('modal-overlay-visible');
+			}
+			$('.modal-overlay').removeAttr('style');
+			myApp.c.notificationOpen = false;
+			// proxima notificacao da lista se existir
+			var proxNotificacao = myApp.c.notificationList.shift();
+			if(typeof proxNotificacao !== 'undefined'){
+				myApp.c.errorNotification(proxNotificacao[0],proxNotificacao[1],proxNotificacao[2])
+			}
+			// callback
+			if(typeof c === 'function') {
+				c();
+			}
+        }
+    });
+	return;
+};
+
 // getLocalStorage - obtem dados do localStorage - return JSON / null
 myApp.c.getLocalStorage = function () {
     return JSON.parse((localStorage.getItem(this.appConfig.localStorageName) || '{}'));
@@ -310,7 +353,7 @@ myApp.c.initLogin = function () {
         
         // afterLoadPageLogin
         myApp.c['afterLoadPage' + pageLogin] = function (pg) {
-            $('.login-screen-title').html(this.appConfig.appName);
+            $('.login-screen-title').attr('style','style="background: url(' + this.appConfig.appLogo + ') no-repeat left center"').html(this.appConfig.appName);
             $('.login-screen-subtitle').html(this.appConfig.appSlogan);
         }
         
@@ -337,7 +380,7 @@ myApp.c.callbackLogin = function (a) {
         myApp.c.appConfig.indexPage = myApp.c.posLogin;
         myApp.c.goIndex();
     } else {
-        myApp.alert('Erro na autenticação, dados incorretos!', 'Opss');
+        this.errorNotification('Erro na autenticação, dados incorretos!');
     }
 }
 
@@ -369,10 +412,10 @@ myApp.c.ajaxApi = function (method, params, callback) {
     if (!Preloader) myApp.showPreloader(' ');
     
     var ajax = $.ajax(ajaxParams);
-    ajax.always(function (jqXHR, textStatus, errorThrown) {
+    ajax.always(function (jqXHR, textStatus, errorThrown) {		
         if (!Preloader) myApp.hidePreloader();
         if ((error = myApp.c.errorAjaxApi(jqXHR, textStatus, errorThrown))) {
-            myApp.alert(error, 'Opss');
+            myApp.c.errorNotification(error);
         } else if (typeof callback == 'function') {
             callback(jqXHR);
         }
@@ -386,6 +429,9 @@ myApp.c.errorAjaxApi = function (jqXHR, textStatus, errorThrown) {
         case 'timeout':
             errorStr = 'O tempo limite de conexão foi atingido.';
             break;
+        case 'error':			
+			errorStr = '[' + jqXHR.status + '] Tente novamente mais tarde.';
+            break;
         default:
             if ((typeofError = typeof jqXHR.error) != 'undefined') {
                 if (typeofError == 'object') {
@@ -398,8 +444,8 @@ myApp.c.errorAjaxApi = function (jqXHR, textStatus, errorThrown) {
                     errorStr += '&bull; ' + String(jqXHR.error);
                 }
             }
+            break;
     }
-    ;
     return errorStr;
 };
 
@@ -521,9 +567,11 @@ myApp.c.initModal = function () {
         });
     }    
 };
+
 myApp.c.openModal = function (modalName) {
     myApp.openModal(this.modal[modalName]);
 };
+
 myApp.c.closeModal = function (modalName) {
     myApp.closeModal(this.modal[modalName]);
 };

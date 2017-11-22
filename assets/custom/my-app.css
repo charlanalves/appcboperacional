@@ -207,6 +207,18 @@ div.content-block-title {
 /* MODAL ------------------------------------- */
 
 
+/* NOTIFICATION ------------------------------ */
+.notifications .item-text {
+	text-overflow: initial!important;
+    -webkit-line-clamp: initial!important;
+    -webkit-box-orient: none!important;
+	overflow: auto!important;
+	height: auto!important;
+	max-height: 150px!important;
+}
+/* NOTIFICATION ------------------------------ */
+
+
 /* UTIL -------------------------------------- */
 .width-33p {
     float: left;
