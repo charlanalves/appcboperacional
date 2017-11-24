@@ -21,6 +21,7 @@ class LoadPage {
             cbDia = 0,
             vlrTotalPromocao = 0,
             vlrTotalCompra = 0,
+            vlrCbTotal = 0,
             itensPedido = [];
             
 
@@ -102,6 +103,7 @@ class LoadPage {
                 var vlrTotalCb = 0,
                     vlrUnidadePromocao = 0,
                     idPromocao = 0,
+                    namePromocao = '',
                     qtdSelecionada = 0;
             
                 $('#listPromocoes li .list-promocoes').each(function(){
@@ -122,8 +124,11 @@ class LoadPage {
                         // id da promocao
                         idPromocao = $($(this).find('div')[0]).data('promocao');
 
+                        // nome da promocao
+                        namePromocao = $(this).find('.name').text();
+
                         // itens do pedido
-                        itensPedido.push({promocao: idPromocao, qtd: qtdSelecionada, vlr_unidade: vlrUnidadePromocao});
+                        itensPedido.push({promocao: idPromocao, nome: namePromocao, qtd: qtdSelecionada, vlr_unidade: vlrUnidadePromocao});
 
                     }
                     
@@ -135,7 +140,8 @@ class LoadPage {
             var calcTotalCb = function () {
                 var vlrCbDia = Util.formatNumberBR($('.detalheCompra .total-cb-dia').text()),
                     vlrCbPromocao = Util.formatNumberBR($('.detalheCompra .total-cb-promocao').text());
-                $('.detalheCompra .total-cb').text(Util.formatNumber(vlrCbDia + vlrCbPromocao));
+                    vlrCbTotal = vlrCbDia + vlrCbPromocao;
+                $('.detalheCompra .total-cb').text(Util.formatNumber(vlrCbTotal));
             };
 
             // calcula total da promocao
@@ -150,6 +156,10 @@ class LoadPage {
                 }
             };
             
+            $(objFormFinalizar['busca_cpf']).keyup(function () {
+                $(objFormFinalizar['forma_pagamento']).html('');
+            });
+            
             // btn pesquisar cliente
             formFinalizar.find('#btn-busca-cliente-pdv').on('click', function () {
                 var CPF = formFinalizar.find('input[name=busca_cpf]').val();
@@ -163,7 +173,6 @@ class LoadPage {
                             // nome do cliente
                             $('#erro-busca-cpf').html(a.cliente.name).removeClass('form-erro').show();
                             // opcoes de pagamento
-                            $(objFormFinalizar['forma_pagamento']).html('');
                             objFormFinalizar.addOptionsSelect('forma_pagamento', a.formasPagamento);
                         }
                         $(btnHtml).removeAttr('disabled');
@@ -174,8 +183,15 @@ class LoadPage {
             // btn pesquisar cliente
             formFinalizar.find('#btn-finalizar-pdv').on('click', function () {
                 var dadosFormFinalizar = objFormFinalizar.getFormData(),
-                    dadosFinalizar = $.extend(dadosFormFinalizar, {total_compra: vlrTotalCompra, cb_dia: cbDia, promocoes: itensPedido});
-                console.log(dadosFormFinalizar);
+                    forma_pagamento_name = $(objFormFinalizar.forma_pagamento).find(':selected').text(),
+                    dadosFinalizar = $.extend(dadosFormFinalizar, {forma_pagamento_name, total_compra: vlrTotalCompra, cb_total: vlrCbTotal, promocoes: itensPedido, usuario: locaStorage});
+                if (!dadosFinalizar.busca_cpf || !dadosFinalizar.forma_pagamento || !dadosFinalizar.cod_venda) {
+                    myApp.c.notification('error', '&bull; Prenencha todos os campos do formulário para finalizar.');
+                } else {
+                    myApp.c.ajaxApi ('operacional-finalizar-pdv', dadosFinalizar, function (a) {
+                        myApp.c.notification('success', 'O pedido foi finalizado com sucesso.', 'Finalizado', Util.reloadPage);
+                    });
+                }
             });
         
         });
