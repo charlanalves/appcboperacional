@@ -186,7 +186,7 @@ class LoadPage {
                     forma_pagamento_name = $(objFormFinalizar.forma_pagamento).find(':selected').text(),
                     dadosFinalizar = $.extend(dadosFormFinalizar, {forma_pagamento_name, total_compra: vlrTotalCompra, cb_total: vlrCbTotal, promocoes: itensPedido, usuario: locaStorage});
                 if (!dadosFinalizar.busca_cpf || !dadosFinalizar.forma_pagamento || !dadosFinalizar.cod_venda) {
-                    myApp.c.notification('error', '&bull; Prenencha todos os campos do formulário para finalizar.');
+                    myApp.c.notification('error', '&bull; Preencha todos os campos do formulário para finalizar.');
                 } else {
                     myApp.c.ajaxApi ('operacional-finalizar-pdv', dadosFinalizar, function (a) {
                         myApp.c.notification('success', 'O pedido foi finalizado com sucesso.', 'Finalizado', Util.reloadPage);
