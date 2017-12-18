@@ -54,19 +54,33 @@ class LoadPage {
             // btn avancar
             formPDV.find('#btn-avancar').on('click', function () {
                 vlrTotalCompra = Util.formatNumberBR(inputCompraPDV.val());
-                if(!vlrTotalCompra) {
-                    $('#erro-avancar').html("Informe o valor da compra.").show();
-                } else if(vlrTotalCompra < vlrTotalPromocao) {
-                    $('#erro-avancar').html("O valor da compra não pode ser menor que o total do pedido (<b>" + Util.formatNumber(vlrTotalPromocao) + "</b>)").show();
-                } else {
-                    $('#erro-avancar').hide();
-                    // modal finalizar
-                    //objFormFinalizar.clear();
-                    myApp.c.openModal('modalFormMain');
+				
+                if (!vlrTotalCompra && !vlrTotalPromocao) {
+					$('#erro-avancar').html("Informe o valor da compra.").show();
+					return;
                 }
+				
+				if(!vlrTotalCompra || vlrTotalCompra < vlrTotalPromocao) {
+					inputCompraPDV.val(Util.formatNumber(vlrTotalPromocao));
+					vlrTotalCompra = vlrTotalPromocao;
+                    // $('#erro-avancar').html("O valor da compra não pode ser menor que o total do pedido (<b>" + Util.formatNumber(vlrTotalPromocao) + "</b>)").show();
+                }
+			
+				$('#erro-avancar').hide();
+				// modal finalizar
+				//objFormFinalizar.clear();
+				myApp.c.openModal('modalFormMain');
+			
             });
 
-            inputCompraPDV.keyup(function () {
+            inputCompraPDV.keypress(function (e) {
+				var reg = /^\d*(\,([\d])*)?$/;
+				if(!reg.test(e.key)){
+					return false;
+				}
+			});
+			
+            inputCompraPDV.keyup(function (e) {
                 calcTotalCbPromocao();
                 calcTotalCbDia();
                 calcTotalCb();
@@ -81,7 +95,6 @@ class LoadPage {
                     cbVlr = Util.formatNumber((vlr*qtd) * (cb / 100));
                 promocao.find('.cb label').text('R$ ' + cbVlr);
                 promocao.find('.vlr_total').text('R$ ' + total);
-
             };
 
             // calcula CB total do dia
@@ -129,6 +142,7 @@ class LoadPage {
                     
                 });
                 $('.detalheCompra .total-cb-promocao').text(Util.formatNumber(vlrTotalCb));
+				inputCompraPDV.attr('placeholder', Util.formatNumber(vlrTotalPromocao));
             };
 
             // calcula CB total da promocao

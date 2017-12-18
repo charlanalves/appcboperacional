@@ -287,7 +287,7 @@ li .width-50p:last-child .item-inner {
 }
 
 .list-promocoes div.list-pro-col1{
-    width: 130px!important;
+    width: 150px!important;
     height: 50px;
     display: block;
     white-space: normal;
@@ -321,16 +321,17 @@ li .width-50p:last-child .item-inner {
 }
 
 .list-promocoes div.list-pro-col3,
-.list-promocoes div.list-pro-col4,
+/*.list-promocoes div.list-pro-col4,*/
 .list-promocoes div.list-pro-col5{
     padding: 0;
-    width: 95px;
+    width: 120px;
     padding-top: 12px;
     text-align: center;
 }
 
 .list-promocoes div.list-pro-col4{
-    width: 70px;
+    /*width: 70px;*/
+	display:none;
 }
 
 
@@ -352,7 +353,7 @@ li .width-50p:last-child .item-inner {
     min-width: 190px;
     background: #FFF;
     height: 100%;
-    margin-left: 418px;
+    margin-left: 490px;
     margin-top: 25px;
     top: 0px;
 }
