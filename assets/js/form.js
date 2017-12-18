@@ -219,7 +219,7 @@ var Util = {
     formatNumberBR: function (n, c) {
         var n,
             c = isNaN(c = Math.abs(c)) ? 2 : c;
-        n.replace('.', '');
+        n = n.replace('.', '');
         nFormatado = parseFloat(n.replace(',', '.'));
         return parseFloat(nFormatado.toFixed(2));
     },
