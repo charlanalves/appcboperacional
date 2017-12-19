@@ -81,41 +81,53 @@ myApp.c.notificationList = [];
 // verifica se tem notificacao aberta
 myApp.c.notificationOpen = false;
 
-// notificacao de erros do app
-myApp.c.errorNotification = function (e, t, c) {
-	// nao abre duas notificacoes ao mesmo tempo, add na lista
-	if(this.notificationOpen) {
-		this.notificationList.push([e, t, c]);
-		return;
-	}
-	this.notificationOpen = true;
-	// bloqueia a tela
-	var telaBloqueada = $('.modal-overlay-visible').length;
-	if(!telaBloqueada){
-		$('.modal-overlay').addClass('modal-overlay-visible');
-	}
-	$('.modal-overlay').attr('style', 'z-index: 19999');
-	myApp.addNotification({
-        title: '<i class="fa fa-warning"></i> <strong>'+(t || 'Opss')+'</strong>',
-        message: e,
-		onClose: function () {
-			if(!telaBloqueada){
-				$('.modal-overlay').removeClass('modal-overlay-visible');
-			}
-			$('.modal-overlay').removeAttr('style');
-			myApp.c.notificationOpen = false;
-			// proxima notificacao da lista se existir
-			var proxNotificacao = myApp.c.notificationList.shift();
-			if(typeof proxNotificacao !== 'undefined'){
-				myApp.c.errorNotification(proxNotificacao[0],proxNotificacao[1],proxNotificacao[2])
-			}
-			// callback
-			if(typeof c === 'function') {
-				c();
-			}
+// notificacao do app
+myApp.c.notification = function (type, text, title, callback) {
+    // nao abre duas notificacoes ao mesmo tempo, add na lista
+    if(this.notificationOpen) {
+            this.notificationList.push([type, text, title, callback]);
+            return;
+    }
+    this.notificationOpen = true;
+    // bloqueia a tela
+    var telaBloqueada = $('.modal-overlay-visible').length;
+    if(!telaBloqueada){
+            $('.modal-overlay').addClass('modal-overlay-visible');
+    }
+    // type (success, error)
+    switch (type) {
+        case 'success':
+            opc = {ico: 'fa-check-circle-o', title: 'Tudo certo', class: 'notification-success'};
+            break;
+        case 'error':
+            opc = {ico: 'fa-warning', title: 'Opss', class: 'notification-success'};
+            break;
+        default:
+            opc = {ico: '', title: '', class: ''};
+            break;
+    }
+    $('.modal-overlay').attr('style', 'z-index: 19999');
+    myApp.addNotification({
+        title: '<i class="fa ' + opc.ico + '"></i> <strong>'+(title || opc.title)+'</strong>',
+        message: text,
+        onClose: function () {
+            if(!telaBloqueada){
+                $('.modal-overlay').removeClass('modal-overlay-visible');
+            }
+            $('.modal-overlay').removeAttr('style');
+            myApp.c.notificationOpen = false;
+            // proxima notificacao da lista se existir
+            var proxNotificacao = myApp.c.notificationList.shift();
+            if(typeof proxNotificacao !== 'undefined'){
+                myApp.c.notification(proxNotificacao[0],proxNotificacao[1],proxNotificacao[2],proxNotificacao[3])
+            }
+            // callback
+            if(typeof callback === 'function') {
+                callback();
+            }
         }
     });
-	return;
+    return;
 };
 
 // getLocalStorage - obtem dados do localStorage - return JSON / null
@@ -380,7 +392,7 @@ myApp.c.callbackLogin = function (a) {
         myApp.c.appConfig.indexPage = myApp.c.posLogin;
         myApp.c.goIndex();
     } else {
-        this.errorNotification('Erro na autentica√ß√£o, dados incorretos!');
+        this.notification('error', 'Erro na autenticaÁ„o, dados incorretos!');
     }
 }
 
@@ -415,7 +427,7 @@ myApp.c.ajaxApi = function (method, params, callback) {
     ajax.always(function (jqXHR, textStatus, errorThrown) {		
         if (!Preloader) myApp.hidePreloader();
         if ((error = myApp.c.errorAjaxApi(jqXHR, textStatus, errorThrown))) {
-            myApp.c.errorNotification(error);
+            myApp.c.notification('error', error);
         } else if (typeof callback == 'function') {
             callback(jqXHR);
         }
@@ -427,7 +439,7 @@ myApp.c.errorAjaxApi = function (jqXHR, textStatus, errorThrown) {
     var errorStr = '';
     switch (textStatus) {
         case 'timeout':
-            errorStr = 'O tempo limite de conex√£o foi atingido.';
+            errorStr = 'O tempo limite de conex„o foi atingido.';
             break;
         case 'error':			
 			errorStr = '[' + jqXHR.status + '] Tente novamente mais tarde.';
@@ -436,8 +448,9 @@ myApp.c.errorAjaxApi = function (jqXHR, textStatus, errorThrown) {
             if ((typeofError = typeof jqXHR.error) != 'undefined') {
                 if (typeofError == 'object') {
                     for (var i in jqXHR.error) {
-                        if (jqXHR.error[i][0]) {
-                            errorStr += '&bull; ' + jqXHR.error[i][0] + '<br />';
+                        erroC = (typeof jqXHR.error[i] === 'string' ? jqXHR.error[i] : jqXHR.error[i][0]);
+                        if (erroC) {
+                            errorStr += '&bull; ' + erroC + '<br />'; 
                         }
                     }
                 } else {
@@ -496,8 +509,8 @@ myApp.c.initMoney = function () {
  * Criar listView
  * action:  url do ajax
  * param:   data do ajax
- * target:  nome do template (√© necess√°rio criar o template.html templates/list/seuTarget.html) 
- *          tbm √© o do destino/alvo da lista <div class="list-block" id="seuTarget"
+ * target:  nome do template (È necess·rio criar o template.html templates/list/seuTarget.html) 
+ *          tbm È o do destino/alvo da lista <div class="list-block" id="seuTarget"
  * callback:    callback ajax
  * search:  busca na listview
  */
@@ -505,7 +518,7 @@ myApp.c.listView = function (action, param, target, callback, search = true, inf
     var objTarget = $('div#' + target);
 	this.appConfig.infineteScrollEnable = infiniteScroll;
     if (objTarget.length == 0) {
-        console.warn('[myApp.c.listView] O target informado n√£o foi encontrado, √© necess√°rio criar uma  <div> com id="' + target + '".');
+        console.warn('[myApp.c.listView] O target informado n„o foi encontrado, È necess·rio criar uma  <div> com id="' + target + '".');
         return;
     }
     objTarget.append('<ul class="template-list" id="target-' + target + '">');
@@ -579,7 +592,7 @@ myApp.c.closeModal = function (modalName) {
 // cria infiniteScroll
 myApp.c.infiniteScroll = function (objTarget, TemplateListView, data) {
     
-    // verifica se √© um array ou object
+    // verifica se È um array ou object
     var dataArray = data instanceof Array;
     var newObjectList;
 
@@ -674,7 +687,7 @@ var Util = $.extend((Util || {}), {
 
     // meses do ano - 0: Janeiro
     getMonthNames: function (a) {
-        var meses = ['Janeiro', 'Fevereiro', 'Mar√ßo', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+        var meses = ['Janeiro', 'Fevereiro', 'MarÁo', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
         return a ? meses[a] : meses;
     },
 
@@ -686,13 +699,13 @@ var Util = $.extend((Util || {}), {
 
     // dias da semana - 0: Domingo
     getDayNames: function (a) {
-        var dias = ['Domingo', 'Segunda', 'Ter√ßa', 'Quarta', 'Quinta', 'Sexta', 'S√°bado'];
+        var dias = ['Domingo', 'Segunda', 'TerÁa', 'Quarta', 'Quinta', 'Sexta', 'S·bado'];
         return a ? dias[a] : dias;
     },
 
     // dias da semana (CURTO) - 0: Domingo
     getDayNamesShort: function (a) {
-        var dias = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'S√°b'];
+        var dias = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'S·b'];
         return a ? dias[a] : dias;
     }
 });
